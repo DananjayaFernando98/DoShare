@@ -110,6 +110,27 @@
             background-color: rgba(0, 123, 255, 0.1);
         }
 
+        .progress-bar {
+            width: 100%;
+            background-color: #343a40;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar-inner {
+            height: 20px;
+            width: 0%;
+            background-color: #28a745;
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .progress-text {
+            color: #fff;
+            margin-top: 5px;
+        }
+
         .list-group {
             margin-top: 20px;
             text-align: left;
@@ -123,6 +144,10 @@
             margin-bottom: 10px;
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
+        }
+
+        .list-group-item span {
+            flex: 1; /* Expand to fill available space */
         }
 
         .list-group-item a,
@@ -181,14 +206,20 @@
             Drag and drop files here
         </div>
 
+        <div class="progress-bar" id="progress-bar">
+            <div class="progress-bar-inner" id="progress-bar-inner"></div>
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        
         <div class="list-group">
             <h2>Uploaded Files:</h2>
             {% if files %}
                 {% for file in files %}
                     <div class="list-group-item">
-                        <span>{{ file }}</span>
-                        <a href="/uploads/{{ file }}" download="{{ file }}">Download</a>
-                        <button onclick="deleteFile('{{ file }}')" class="delete-btn">Delete</button>
+                        <span>{{ file.filename }}</span>
+                        <span>{{ file.size | filesizeformat }}</span>
+                        <a href="/uploads/{{ file.filename }}" download="{{ file.filename }}">Download</a>
+                        <button onclick="deleteFile('{{ file.filename }}')" class="delete-btn">Delete</button>
                     </div>
                 {% endfor %}
             {% else %}
@@ -200,21 +231,28 @@
     <script>
         function uploadFiles() {
             var formData = new FormData(document.getElementById('uploadForm'));
+            var xhr = new XMLHttpRequest();
 
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
+            xhr.open('POST', '/upload', true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var percentComplete = (e.loaded / e.total) * 100;
+                    document.getElementById('progress-bar-inner').style.width = percentComplete + '%';
+                    document.getElementById('progress-text').innerText = 'Uploading... ' + percentComplete.toFixed(0) + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 201) {
                     alert('File(s) uploaded successfully');
                     window.location.href = '/'; // Redirect to main page
                 } else {
-                    throw new Error('File upload failed');
+                    alert('File upload failed');
                 }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert('File upload failed');
-            });
+            };
+
+            xhr.send(formData);
         }
 
         function deleteFile(filename) {
@@ -240,44 +278,34 @@
             }
         }
 
-        document.getElementById('drag-drop-area').addEventListener('dragover', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.target.classList.add('dragover');
+        // Drag and Drop Event Listeners
+        var dragDropArea = document.getElementById('drag-drop-area');
+
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
         });
 
-        document.getElementById('drag-drop-area').addEventListener('dragleave', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.target.classList.remove('dragover');
-        });
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
-        document.getElementById('drag-drop-area').addEventListener('drop', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.target.classList.remove('dragover');
+        dragDropArea.addEventListener('drop', handleDrop, false);
 
-            var files = event.dataTransfer.files;
+        function handleDrop(e) {
+            var dt = e.dataTransfer;
+            var files = dt.files;
+
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
             var formData = new FormData();
             for (var i = 0; i < files.length; i++) {
                 formData.append('file', files[i]);
             }
-
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
-                    alert('File(s) uploaded successfully');
-                    window.location.href = '/'; // Redirect to main page
-                } else {
-                    throw new Error('File upload failed');
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert('File upload failed');
-            });
-        });
+            uploadFiles(formData);
+        }
     </script>
 </body>
 </html>

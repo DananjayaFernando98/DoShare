@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, send_from_directory, jsonify
 import os
+from werkzeug.utils import secure_filename
+from flask.helpers import send_file
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -14,7 +16,12 @@ def allowed_file(filename):
 @app.route('/')
 def home():
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('index.html', files=files)
+    file_list = []
+    for file_name in files:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+        size = os.path.getsize(file_path)
+        file_list.append({'filename': file_name, 'size': size})
+    return render_template('index.html', files=file_list)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -26,7 +33,8 @@ def upload_file():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
         if file and allowed_file(file.filename):
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         else:
             return jsonify({'error': 'File type not allowed'}), 400
     
