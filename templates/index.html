@@ -98,7 +98,7 @@
         }
 
         .drag-drop-area {
-            border: 2px dashed #007bff;
+            border: 2px dashed white; /* Changed border color to white */
             border-radius: 5px;
             padding: 20px;
             margin-top: 20px;
@@ -160,6 +160,10 @@
             transition: background-color 0.3s ease;
         }
 
+        .list-group-item a {
+            margin-right: 10px; /* Added margin to the right side of the download button */
+        }
+
         .list-group-item a:hover,
         .list-group-item button:hover {
             background-color: rgba(255, 255, 255, 0.2);
@@ -190,27 +194,33 @@
 <body>
     <header>
         <div class="logo">
+            <img src="path/to/logo.png" alt="Logo">
             <span>DoShare</span>
         </div>
+        <a href="/">Home</a>
     </header>
 
     <div class="container">
         <h1>File Upload and Management</h1>
-        <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data" class="form-group">
-            <label for="fileInput" class="file-label">Select File(s)</label>
-            <input type="file" name="file" id="fileInput" class="file-input" multiple>
-            <button type="button" onclick="uploadFiles()" class="upload-btn">Upload</button>
+        <p>Drag and drop files here or click below to upload.</p>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="file" class="file-input" id="fileInput" name="file" multiple accept=".txt, .pdf, .png, .jpg, .jpeg, .gif, .mp4">
+                <label for="fileInput" class="file-label">Choose File(s)</label>
+            </div>
+            <button type="button" class="upload-btn" onclick="uploadFiles()">Upload</button>
         </form>
 
-        <div id="drag-drop-area" class="drag-drop-area">
-            Drag and drop files here
+        <div class="drag-drop-area" id="drag-drop-area">
+            <p>Drop files here</p>
         </div>
 
-        <div class="progress-bar" id="progress-bar">
+        <div class="progress-bar">
             <div class="progress-bar-inner" id="progress-bar-inner"></div>
         </div>
         <div class="progress-text" id="progress-text"></div>
-        
+
         <div class="list-group">
             <h2>Uploaded Files:</h2>
             {% if files %}

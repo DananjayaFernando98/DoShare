@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, send_from_directory, jsonify
 import os
 from werkzeug.utils import secure_filename
-from flask.helpers import send_file
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -42,7 +41,11 @@ def upload_file():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    else:
+        return jsonify({'error': 'File not found'}), 404
 
 @app.route('/delete/<filename>', methods=['DELETE'])
 def delete_file(filename):
