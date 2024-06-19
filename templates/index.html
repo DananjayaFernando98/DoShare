@@ -43,7 +43,7 @@
             font-family: 'Playwrite', sans-serif; /* Use Playwrite font */
             font-size: 24px; /* Example font size */
             font-weight: bold; /* Example font weight */
-            text-transform: uppercase; /* Example text transformation */
+            /*text-transform: uppercase; */ /* Example text transformation */
             letter-spacing: 2px; /* Example letter spacing */
             margin: 0; /* Remove default margin */
         }
@@ -95,6 +95,19 @@
 
         .upload-btn:hover {
             background-color: #218838;
+        }
+
+        .drag-drop-area {
+            border: 2px dashed #007bff;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .drag-drop-area.dragover {
+            background-color: rgba(0, 123, 255, 0.1);
         }
 
         .list-group {
@@ -163,7 +176,11 @@
             <input type="file" name="file" id="fileInput" class="file-input" multiple>
             <button type="button" onclick="uploadFiles()" class="upload-btn">Upload</button>
         </form>
-        
+
+        <div id="drag-drop-area" class="drag-drop-area">
+            Drag and drop files here
+        </div>
+
         <div class="list-group">
             <h2>Uploaded Files:</h2>
             {% if files %}
@@ -222,6 +239,45 @@
                 });
             }
         }
+
+        document.getElementById('drag-drop-area').addEventListener('dragover', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.target.classList.add('dragover');
+        });
+
+        document.getElementById('drag-drop-area').addEventListener('dragleave', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.target.classList.remove('dragover');
+        });
+
+        document.getElementById('drag-drop-area').addEventListener('drop', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.target.classList.remove('dragover');
+
+            var files = event.dataTransfer.files;
+            var formData = new FormData();
+            for (var i = 0; i < files.length; i++) {
+                formData.append('file', files[i]);
+            }
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    alert('File(s) uploaded successfully');
+                    window.location.href = '/'; // Redirect to main page
+                } else {
+                    throw new Error('File upload failed');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('File upload failed');
+            });
+        });
     </script>
 </body>
 </html>
